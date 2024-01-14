@@ -1,0 +1,14 @@
+{
+  "name": "jlox-js",
+  "module": "Lox.ts",
+  "type": "module",
+  "scripts": {
+    "build": "bun build ./lox.ts --compile --outfile lox"
+  },
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  }
+}
