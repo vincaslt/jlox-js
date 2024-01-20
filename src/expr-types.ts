@@ -14,7 +14,7 @@ export type Grouping = {
 
 export type Literal = {
   __type: "Literal";
-  value: string | number | null;
+  value: boolean | string | number | null;
 };
 
 export type Unary = {

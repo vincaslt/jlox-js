@@ -1,7 +1,5 @@
 import { match } from "ts-pattern";
 import type { Expr } from "./expr-types";
-import Token from "./token";
-import TokenType from "./token-type";
 
 function parenthesize(name: string, ...exprs: Expr[]) {
   let str = "(" + name;
