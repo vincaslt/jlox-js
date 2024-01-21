@@ -1,5 +1,5 @@
-import { P } from "ts-pattern";
 import type { Binary, Expr, Grouping, Literal, Unary } from "./expr-types";
+import * as Lox from "./lox";
 import Token from "./token";
 import TokenType from "./token-type";
 
@@ -9,6 +9,18 @@ export default class Parser {
 
   constructor(tokens: Token[]) {
     this.tokens = tokens;
+  }
+
+  public parse() {
+    try {
+      return this.expression();
+    } catch (error) {
+      if (error instanceof ParseError) {
+        return null;
+      } else {
+        throw error;
+      }
+    }
   }
 
   private expression(): Expr {
@@ -102,12 +114,41 @@ export default class Parser {
       return { __type: "Grouping", expression } satisfies Grouping;
     }
 
-    throw new Error("Handle undetected stuff?");
+    throw this.error(this.peek(), "Expect expression.");
   }
 
   private consume(type: TokenType, message: string) {
-    // TODO: implement
-    throw new Error("Not yet implemented");
+    if (this.check(type)) {
+      return this.advance();
+    }
+    throw this.error(this.peek(), message);
+  }
+
+  private error(token: Token, message: string) {
+    Lox.error(token, message);
+    return new ParseError();
+  }
+
+  private synchronize() {
+    this.advance();
+
+    while (!this.isAtEnd()) {
+      if (this.previous().type === TokenType.SEMICOLON) return;
+
+      switch (this.peek().type) {
+        case TokenType.CLASS:
+        case TokenType.FUN:
+        case TokenType.VAR:
+        case TokenType.FOR:
+        case TokenType.IF:
+        case TokenType.WHILE:
+        case TokenType.PRINT:
+        case TokenType.RETURN:
+          return;
+      }
+
+      this.advance();
+    }
   }
 
   private match(...types: TokenType[]): boolean {
@@ -139,10 +180,12 @@ export default class Parser {
   }
 
   private peek() {
-    return this.tokens.at(this.current);
+    return this.tokens.at(this.current)!;
   }
 
   private previous() {
     return this.tokens.at(this.current - 1)!;
   }
 }
+
+class ParseError extends Error {}

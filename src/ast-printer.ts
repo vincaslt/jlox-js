@@ -10,7 +10,7 @@ function parenthesize(name: string, ...exprs: Expr[]) {
   return str;
 }
 
-function printAst(ast: Expr) {
+export function printAst(ast: Expr) {
   return match(ast)
     .with({ __type: "Binary" }, (expr) =>
       parenthesize(expr.operator.lexeme, expr.left, expr.right)

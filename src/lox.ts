@@ -1,4 +1,8 @@
+import { printAst } from "./ast-printer";
+import Parser from "./parser";
 import Scanner from "./scanner";
+import type Token from "./token";
+import TokenType from "./token-type";
 
 const ARGS_START = 2; // [bun, lox, ...args]
 
@@ -40,13 +44,23 @@ async function runFile(path: string) {
 function run(source: string) {
   const scanner = new Scanner(source);
   const tokens = scanner.scanTokens();
-  for (const token of tokens) {
-    process.stdout.write(token + "\n");
+
+  const parser = new Parser(tokens);
+  const expression = parser.parse();
+
+  if (hadError) {
+    return;
   }
+
+  process.stdout.write(printAst(expression!) + "\n");
 }
 
-export function error(line: number, message: string) {
-  report(line, "", message);
+export function error(token: Token, message: string) {
+  if (token.type === TokenType.EOF) {
+    report(token.line, " at end", message);
+  } else {
+    report(token.line, `at '${token.lexeme}'`, message);
+  }
 }
 
 function report(line: number, where: string, message: string) {

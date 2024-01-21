@@ -3,7 +3,8 @@
   "module": "Lox.ts",
   "type": "module",
   "scripts": {
-    "build": "bun build ./lox.ts --compile --outfile lox"
+    "build": "bun build src/lox.ts --compile --outfile lox",
+    "start": "bun run src/lox.ts"
   },
   "devDependencies": {
     "@types/bun": "latest"
