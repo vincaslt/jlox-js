@@ -1,5 +1,14 @@
 import type Token from "~/token";
 
+export type Ternary = {
+  __type: "Ternary";
+  left: Expr;
+  operatorLeft: Token;
+  middle: Expr;
+  operatorRight: Token;
+  right: Expr;
+};
+
 export type Binary = {
   __type: "Binary";
   left: Expr;
@@ -23,4 +32,4 @@ export type Unary = {
   right: Expr;
 };
 
-export type Expr = Binary | Grouping | Literal | Unary;
+export type Expr = Ternary | Binary | Grouping | Literal | Unary;

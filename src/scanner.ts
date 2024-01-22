@@ -77,8 +77,14 @@ export default class Scanner {
       case ";":
         this.addToken(TokenType.SEMICOLON);
         break;
+      case ":":
+        this.addToken(TokenType.COLON);
+        break;
       case "*":
         this.addToken(TokenType.STAR);
+        break;
+      case "?":
+        this.addToken(TokenType.QUESTION_MARK);
         break;
       case "!":
         this.addToken(this.match("=") ? TokenType.BANG_EQUAL : TokenType.BANG);
@@ -121,7 +127,7 @@ export default class Scanner {
         } else if (this.isAlpha(c)) {
           this.identifier();
         } else {
-          Lox.error(this.line, "Unexpected character.");
+          Lox.report(this.line, ` at ${c}`, "Unexpected character.");
         }
     }
   }
@@ -171,7 +177,7 @@ export default class Scanner {
     }
 
     if (this.isAtEnd) {
-      Lox.error(this.line, "Unterminated string");
+      Lox.report(this.line, "", "Unterminated string");
       return;
     }
 

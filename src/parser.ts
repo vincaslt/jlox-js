@@ -1,4 +1,11 @@
-import type { Binary, Expr, Grouping, Literal, Unary } from "./expr-types";
+import type {
+  Binary,
+  Expr,
+  Grouping,
+  Literal,
+  Ternary,
+  Unary,
+} from "./expr-types";
 import * as Lox from "./lox";
 import Token from "./token";
 import TokenType from "./token-type";
@@ -24,10 +31,66 @@ export default class Parser {
   }
 
   private expression(): Expr {
-    return this.equality();
+    return this.commaExpression();
+  }
+
+  private commaExpression(): Expr {
+    if (this.match(TokenType.COMMA)) {
+      const operator = this.previous();
+      this.ternary(); // Discard right operand
+      throw this.error(
+        operator,
+        `Binary operator \`${operator.lexeme}\` missing left operand.`
+      );
+    }
+
+    let left = this.ternary();
+
+    while (this.match(TokenType.COMMA)) {
+      const operator = this.previous();
+      const right = this.ternary();
+      left = { __type: "Binary", left, operator, right } satisfies Binary;
+    }
+
+    return left;
+  }
+
+  private ternary(): Expr {
+    let left = this.equality();
+
+    if (this.match(TokenType.QUESTION_MARK)) {
+      const operatorLeft = this.previous();
+      let middle = this.ternary();
+
+      if (this.match(TokenType.COLON)) {
+        const operatorRight = this.previous();
+        let right = this.ternary();
+        return {
+          __type: "Ternary",
+          left,
+          operatorLeft,
+          middle,
+          operatorRight,
+          right,
+        } satisfies Ternary;
+      } else {
+        throw this.error(this.peek(), "Expect right expression in ternary.");
+      }
+    }
+
+    return left;
   }
 
   private equality(): Expr {
+    if (this.match(TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL)) {
+      const operator = this.previous();
+      this.comparison(); // Discard right operand
+      throw this.error(
+        operator,
+        `Binary operator \`${operator.lexeme}\` missing left operand.`
+      );
+    }
+
     let left = this.comparison();
 
     while (this.match(TokenType.BANG_EQUAL, TokenType.EQUAL_EQUAL)) {
@@ -40,6 +103,22 @@ export default class Parser {
   }
 
   private comparison(): Expr {
+    if (
+      this.match(
+        TokenType.GREATER,
+        TokenType.GREATER_EQUAL,
+        TokenType.LESS,
+        TokenType.LESS_EQUAL
+      )
+    ) {
+      const operator = this.previous();
+      this.consume(
+        operator.type,
+        `Binary operator \`${operator.lexeme}\` missing left operand.`
+      );
+      this.term(); // Discard right operand
+    }
+
     let left = this.term();
 
     while (
@@ -59,6 +138,15 @@ export default class Parser {
   }
 
   private term(): Expr {
+    if (this.match(TokenType.MINUS, TokenType.PLUS)) {
+      const operator = this.previous();
+      this.factor(); // Discard right operand
+      throw this.error(
+        operator,
+        `Binary operator \`${operator.lexeme}\` missing left operand.`
+      );
+    }
+
     let left = this.factor();
 
     while (this.match(TokenType.MINUS, TokenType.PLUS)) {
@@ -71,6 +159,15 @@ export default class Parser {
   }
 
   private factor(): Expr {
+    if (this.match(TokenType.SLASH, TokenType.STAR)) {
+      const operator = this.previous();
+      this.unary(); // Discard right operand
+      throw this.error(
+        operator,
+        `Binary operator \`${operator.lexeme}\` missing left operand.`
+      );
+    }
+
     let left = this.unary();
 
     while (this.match(TokenType.SLASH, TokenType.STAR)) {

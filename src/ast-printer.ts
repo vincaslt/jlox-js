@@ -12,6 +12,14 @@ function parenthesize(name: string, ...exprs: Expr[]) {
 
 export function printAst(ast: Expr) {
   return match(ast)
+    .with({ __type: "Ternary" }, (expr) =>
+      parenthesize(
+        expr.operatorLeft.lexeme + expr.operatorRight.lexeme,
+        expr.left,
+        expr.middle,
+        expr.right
+      )
+    )
     .with({ __type: "Binary" }, (expr) =>
       parenthesize(expr.operator.lexeme, expr.left, expr.right)
     )

@@ -10,6 +10,13 @@ if (args.length !== ARGS_START + 1) {
 const outputDir = args[ARGS_START];
 
 defineAst(outputDir, "expr-types.ts", "Expr", {
+  Ternary: {
+    left: "Expr",
+    operatorLeft: "Token",
+    middle: "Expr",
+    operatorRight: "Token",
+    right: "Expr",
+  },
   Binary: {
     left: "Expr",
     operator: "Token",
@@ -19,7 +26,7 @@ defineAst(outputDir, "expr-types.ts", "Expr", {
     expression: "Expr",
   },
   Literal: {
-    value: "string | number | null",
+    value: "boolean | string | number | null",
   },
   Unary: {
     operator: "Token",

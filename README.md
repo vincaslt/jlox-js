@@ -4,9 +4,12 @@ This is a TypeScript implementation of the Java version of the tree-walk interpr
 
 It's done for learning purposes because I find following code verbatim boring, so writing the code in TS forces me to actually understand it and reinterpret it.
 
-I added some extra features not present in the original book implementation:
+I added some extra features not present in the original book implementation and/or listed as optional extra tasks:
 
 - Escaping string characters (\0 \n \b \t \\\ etc)
+- Right-associated ternary operator
+- C-style comma separated expressions
+- Binary operator w/missing left operand error productions
 
 To install dependencies:
 
