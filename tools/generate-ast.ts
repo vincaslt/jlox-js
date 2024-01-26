@@ -26,7 +26,7 @@ defineAst(outputDir, "expr-types.ts", "Expr", {
     expression: "Expr",
   },
   Literal: {
-    value: "boolean | string | number | null",
+    value: "LiteralValue",
   },
   Unary: {
     operator: "Token",
@@ -58,6 +58,9 @@ function defineAst(
 
   const typesUnion = Object.keys(types).join(" | ");
   writer.write(`\nexport type ${baseName} = ${typesUnion};\n`);
+  writer.write(
+    `\nexport type LiteralValue = boolean | string | number | null;\n`
+  );
 
   writer.flush();
 }

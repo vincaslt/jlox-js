@@ -1,15 +1,16 @@
+import type { LiteralValue } from "./expr-types";
 import type TokenType from "./token-type";
 
 export default class Token {
   readonly type: TokenType;
   readonly lexeme: string;
-  readonly literal: string | number | null;
+  readonly literal: LiteralValue;
   readonly line: number;
 
   constructor(
     type: TokenType,
     lexeme: string,
-    literal: string | number | null,
+    literal: LiteralValue,
     line: number
   ) {
     this.type = type;

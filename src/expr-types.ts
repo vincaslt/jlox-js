@@ -23,7 +23,7 @@ export type Grouping = {
 
 export type Literal = {
   __type: "Literal";
-  value: boolean | string | number | null;
+  value: LiteralValue;
 };
 
 export type Unary = {
@@ -33,3 +33,5 @@ export type Unary = {
 };
 
 export type Expr = Ternary | Binary | Grouping | Literal | Unary;
+
+export type LiteralValue = boolean | string | number | null;
