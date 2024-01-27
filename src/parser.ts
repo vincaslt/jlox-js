@@ -7,6 +7,7 @@ import type {
   Unary,
 } from "./expr-types";
 import * as Lox from "./lox";
+import type { Stmt } from "./stmt-types";
 import Token from "./token";
 import TokenType from "./token-type";
 
@@ -19,15 +20,32 @@ export default class Parser {
   }
 
   public parse() {
-    try {
-      return this.expression();
-    } catch (error) {
-      if (error instanceof ParseError) {
-        return null;
-      } else {
-        throw error;
-      }
+    const statements: Stmt[] = [];
+
+    while (!this.isAtEnd()) {
+      statements.push(this.statement());
     }
+
+    return statements;
+  }
+
+  private statement(): Stmt {
+    if (this.match(TokenType.PRINT)) {
+      return this.printStatement();
+    }
+    return this.exprStatement();
+  }
+
+  private exprStatement(): Stmt {
+    const expression = this.expression();
+    this.consume(TokenType.SEMICOLON, "Expect ';' after value");
+    return { __type: "Expression", expression } satisfies Stmt;
+  }
+
+  private printStatement(): Stmt {
+    const expression = this.expression();
+    this.consume(TokenType.SEMICOLON, "Expect ';' after value");
+    return { __type: "Print", expression } satisfies Stmt;
   }
 
   private expression(): Expr {

@@ -11,6 +11,7 @@ import type {
 import TokenType from "./token-type";
 import type Token from "./token";
 import * as Lox from "~/lox";
+import type { Expression, Print, Stmt } from "./stmt-types";
 
 function evaluate(expr: Expr): LiteralValue {
   return match(expr)
@@ -20,6 +21,22 @@ function evaluate(expr: Expr): LiteralValue {
     .with({ __type: "Literal" }, evaluateLiteralExpr)
     .with({ __type: "Unary" }, evaluateUnaryExpr)
     .exhaustive();
+}
+
+function execute(stmt: Stmt): void {
+  return match(stmt)
+    .with({ __type: "Print" }, evaluatePrintStmt)
+    .with({ __type: "Expression" }, evaluateExprStmt)
+    .exhaustive();
+}
+
+function evaluatePrintStmt(stmt: Print): void {
+  const value = evaluate(stmt.expression);
+  process.stdout.write(stringify(value) + "\n");
+}
+
+function evaluateExprStmt(stmt: Expression): void {
+  evaluate(stmt.expression);
 }
 
 function evaluateLiteralExpr(expr: Literal): LiteralValue {
@@ -159,10 +176,11 @@ function stringify(value: LiteralValue) {
   return value.toString();
 }
 
-export function interpret(expression: Expr) {
+export function interpret(statements: Stmt[]) {
   try {
-    const value = evaluate(expression);
-    process.stdout.write(stringify(value) + "\n");
+    for (const statement of statements) {
+      execute(statement);
+    }
   } catch (e) {
     if (e instanceof RuntimeError) {
       Lox.runtimeError(e);

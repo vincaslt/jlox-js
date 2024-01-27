@@ -34,6 +34,16 @@ defineAst(outputDir, "expr-types.ts", "Expr", {
   },
 });
 
+// TODO: fix, works kinda weird for statements, probably remove this generator altogether
+defineAst(outputDir, "stmt-types.ts", "Stmt", {
+  Expression: {
+    expression: "Expr",
+  },
+  Print: {
+    expression: "Expr",
+  },
+});
+
 function defineAst(
   outputDir: string,
   fileName: string,

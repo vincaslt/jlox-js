@@ -50,13 +50,13 @@ function run(source: string) {
   const tokens = scanner.scanTokens();
 
   const parser = new Parser(tokens);
-  const expression = parser.parse();
+  const statements = parser.parse();
 
   if (hadError) {
     return;
   }
 
-  interpret(expression!);
+  interpret(statements);
 }
 
 export function error(token: Token, message: string) {
