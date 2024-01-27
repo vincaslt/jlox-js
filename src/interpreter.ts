@@ -1,5 +1,6 @@
 import { match } from "ts-pattern";
 import type {
+  Binary,
   Expr,
   Grouping,
   Literal,
@@ -8,27 +9,17 @@ import type {
   Unary,
 } from "./expr-types";
 import TokenType from "./token-type";
+import type Token from "./token";
+import * as Lox from "~/lox";
 
 function evaluate(expr: Expr): LiteralValue {
-  return (
-    match(expr)
-      // .with({ __type: "Ternary" }, (expr) =>
-      //   parenthesize(
-      //     expr.operatorLeft.lexeme + expr.operatorRight.lexeme,
-      //     expr.left,
-      //     expr.middle,
-      //     expr.right
-      //   )
-      // )
-      // .with({ __type: "Binary" }, (expr) =>
-      //   parenthesize(expr.operator.lexeme, expr.left, expr.right)
-      // )
-      .with({ __type: "Ternary" }, evaluateTernaryExpr)
-      .with({ __type: "Grouping" }, evaluateGroupingExpr)
-      .with({ __type: "Literal" }, evaluateLiteralExpr)
-      .with({ __type: "Unary" }, evaluateUnaryExpr)
-      .exhaustive()
-  );
+  return match(expr)
+    .with({ __type: "Binary" }, evaluateBinaryExpr)
+    .with({ __type: "Ternary" }, evaluateTernaryExpr)
+    .with({ __type: "Grouping" }, evaluateGroupingExpr)
+    .with({ __type: "Literal" }, evaluateLiteralExpr)
+    .with({ __type: "Unary" }, evaluateUnaryExpr)
+    .exhaustive();
 }
 
 function evaluateLiteralExpr(expr: Literal): LiteralValue {
@@ -44,12 +35,60 @@ function evaluateUnaryExpr(expr: Unary): LiteralValue {
 
   switch (expr.operator.type) {
     case TokenType.MINUS:
+      checkNumberOperand(expr.operator, right);
       return -Number(right);
     case TokenType.BANG:
       return !isTruthy(right);
   }
 
   // TODO: Unreachable, handle error
+  return null;
+}
+
+function evaluateBinaryExpr(expr: Binary): LiteralValue {
+  const left = evaluate(expr.left);
+  const right = evaluate(expr.right);
+
+  switch (expr.operator.type) {
+    case TokenType.MINUS:
+      checkNumberOperands(expr.operator, left, right);
+      return Number(left) - Number(right);
+    case TokenType.SLASH:
+      checkNumberOperands(expr.operator, left, right);
+      return Number(left) / Number(right);
+    case TokenType.STAR:
+      checkNumberOperands(expr.operator, left, right);
+      return Number(left) * Number(right);
+    case TokenType.PLUS:
+      if (typeof left === "number" && typeof right === "number") {
+        return Number(left) + Number(right);
+      }
+      if (typeof left === "string" && typeof right === "string") {
+        return String(left) + String(right);
+      }
+      throw new RuntimeError(
+        expr.operator,
+        "Operands must be two numbers or two strings."
+      );
+    case TokenType.GREATER:
+      checkNumberOperands(expr.operator, left, right);
+      return Number(left) > Number(right);
+    case TokenType.GREATER_EQUAL:
+      checkNumberOperands(expr.operator, left, right);
+      return Number(left) >= Number(right);
+    case TokenType.LESS:
+      checkNumberOperands(expr.operator, left, right);
+      return Number(left) < Number(right);
+    case TokenType.LESS_EQUAL:
+      checkNumberOperands(expr.operator, left, right);
+      return Number(left) <= Number(right);
+    case TokenType.BANG_EQUAL:
+      return left !== right;
+    case TokenType.EQUAL_EQUAL:
+      return left === right;
+  }
+
+  // TODO: unreachable, handle error
   return null;
 }
 
@@ -72,4 +111,52 @@ function isTruthy(value: LiteralValue): boolean {
   }
 
   return false;
+}
+
+function checkNumberOperand(operator: Token, operand: LiteralValue) {
+  if (typeof operand !== "number" || isNaN(operand)) {
+    throw new RuntimeError(operator, "Operand must be a number");
+  }
+}
+function checkNumberOperands(
+  operator: Token,
+  left: LiteralValue,
+  right: LiteralValue
+) {
+  if (
+    typeof left !== "number" ||
+    isNaN(left) ||
+    typeof right !== "number" ||
+    isNaN(right)
+  ) {
+    throw new RuntimeError(operator, "Operands must be a number");
+  }
+}
+
+export class RuntimeError extends Error {
+  readonly token: Token;
+
+  constructor(token: Token, message: string) {
+    super(message);
+    this.token = token;
+  }
+}
+
+function stringify(value: LiteralValue) {
+  if (value === null) {
+    return "nil";
+  }
+
+  return value.toString();
+}
+
+export function interpret(expression: Expr) {
+  try {
+    const value = evaluate(expression);
+    process.stdout.write(stringify(value) + "\n");
+  } catch (e) {
+    if (e instanceof RuntimeError) {
+      Lox.runtimeError(e);
+    }
+  }
 }

@@ -1,4 +1,4 @@
-import { printAst } from "./ast-printer";
+import { interpret, type RuntimeError } from "./interpreter";
 import Parser from "./parser";
 import Scanner from "./scanner";
 import type Token from "./token";
@@ -9,6 +9,7 @@ const ARGS_START = 2; // [bun, lox, ...args]
 const args = process.argv;
 
 let hadError = false;
+let hadRuntimeError = false;
 
 if (args.length > ARGS_START + 1) {
   process.stdout.write("Usage: jlox [script]\n");
@@ -39,6 +40,9 @@ async function runFile(path: string) {
   if (hadError) {
     process.exit(65);
   }
+  if (hadRuntimeError) {
+    process.exit(70);
+  }
 }
 
 function run(source: string) {
@@ -52,7 +56,7 @@ function run(source: string) {
     return;
   }
 
-  process.stdout.write(printAst(expression!) + "\n");
+  interpret(expression!);
 }
 
 export function error(token: Token, message: string) {
@@ -68,4 +72,11 @@ export function report(line: number, where: string, message: string) {
     "[line " + line + "] Error" + where + ": " + message + "\n"
   );
   hadError = true;
+}
+
+export function runtimeError(error: RuntimeError) {
+  process.stderr.write(
+    `Runtime error: ${error.message}\n[line ${error.token.line}]\n`
+  );
+  hadRuntimeError = true;
 }
