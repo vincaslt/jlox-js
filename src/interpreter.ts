@@ -55,7 +55,13 @@ function evaluateBinaryExpr(expr: Binary): LiteralValue {
       return Number(left) - Number(right);
     case TokenType.SLASH:
       checkNumberOperands(expr.operator, left, right);
-      return Number(left) / Number(right);
+      const rightNumOperand = Number(right);
+
+      if (rightNumOperand === 0) {
+        throw new RuntimeError(expr.operator, "Division by zero");
+      }
+
+      return Number(left) / rightNumOperand;
     case TokenType.STAR:
       checkNumberOperands(expr.operator, left, right);
       return Number(left) * Number(right);
@@ -63,7 +69,10 @@ function evaluateBinaryExpr(expr: Binary): LiteralValue {
       if (typeof left === "number" && typeof right === "number") {
         return Number(left) + Number(right);
       }
-      if (typeof left === "string" && typeof right === "string") {
+      if (
+        (typeof left === "string" || typeof left === "number") &&
+        (typeof right === "string" || typeof right === "number")
+      ) {
         return String(left) + String(right);
       }
       throw new RuntimeError(

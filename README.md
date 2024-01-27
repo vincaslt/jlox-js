@@ -10,6 +10,8 @@ I added some extra features not present in the original book implementation and/
 - Right-associated ternary operator
 - C-style comma separated expressions
 - Binary operator w/missing left operand error productions
+- Division by zero error handling
+- Automatic number conversion to string when adding to strings
 
 To install dependencies:
 
