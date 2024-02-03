@@ -7,14 +7,19 @@ import type {
   LiteralValue,
   Ternary,
   Unary,
+  Variable,
 } from "./expr-types";
 import TokenType from "./token-type";
 import type Token from "./token";
 import * as Lox from "~/lox";
-import type { Expression, Print, Stmt } from "./stmt-types";
+import type { Expression, Print, Stmt, Var } from "./stmt-types";
+import Environment from "./environment";
+
+const environment = new Environment();
 
 function evaluate(expr: Expr): LiteralValue {
   return match(expr)
+    .with({ __type: "Variable" }, evaluateVariableExpr)
     .with({ __type: "Binary" }, evaluateBinaryExpr)
     .with({ __type: "Ternary" }, evaluateTernaryExpr)
     .with({ __type: "Grouping" }, evaluateGroupingExpr)
@@ -25,6 +30,7 @@ function evaluate(expr: Expr): LiteralValue {
 
 function execute(stmt: Stmt): void {
   return match(stmt)
+    .with({ __type: "Var" }, evaluateVarStmt)
     .with({ __type: "Print" }, evaluatePrintStmt)
     .with({ __type: "Expression" }, evaluateExprStmt)
     .exhaustive();
@@ -33,6 +39,18 @@ function execute(stmt: Stmt): void {
 function evaluatePrintStmt(stmt: Print): void {
   const value = evaluate(stmt.expression);
   process.stdout.write(stringify(value) + "\n");
+}
+
+function evaluateVarStmt(stmt: Var): void {
+  let value: LiteralValue = null;
+  if (stmt.initializer) {
+    value = evaluate(stmt.initializer);
+  }
+  environment.define(stmt.name.lexeme, value);
+}
+
+function evaluateVariableExpr(stmt: Variable): LiteralValue {
+  return environment.get(stmt.name);
 }
 
 function evaluateExprStmt(stmt: Expression): void {
