@@ -5,9 +5,10 @@ import type {
   Literal,
   Ternary,
   Unary,
+  Variable,
 } from "./expr-types";
 import * as Lox from "./lox";
-import type { Stmt } from "./stmt-types";
+import type { Stmt, Var } from "./stmt-types";
 import Token from "./token";
 import TokenType from "./token-type";
 
@@ -23,10 +24,37 @@ export default class Parser {
     const statements: Stmt[] = [];
 
     while (!this.isAtEnd()) {
-      statements.push(this.statement());
+      const declaration = this.declaration();
+      if (declaration !== null) {
+        statements.push(declaration);
+      }
     }
 
     return statements;
+  }
+
+  private declaration() {
+    try {
+      if (this.match(TokenType.VAR)) {
+        return this.varDeclaration();
+      }
+      return this.statement();
+    } catch (e) {
+      this.synchronize();
+      return null;
+    }
+  }
+
+  private varDeclaration(): Stmt {
+    const name = this.consume(TokenType.IDENTIFIER, "Expect variable name");
+
+    let initializer: Expr | undefined;
+    if (this.match(TokenType.EQUAL)) {
+      initializer = this.expression();
+    }
+
+    this.consume(TokenType.SEMICOLON, "Expect ';' after variable declaration");
+    return { __type: "Var", name, initializer } satisfies Var;
   }
 
   private statement(): Stmt {
@@ -221,6 +249,10 @@ export default class Parser {
     if (this.match(TokenType.NUMBER, TokenType.STRING)) {
       const token = this.previous();
       return { __type: "Literal", value: token.literal } satisfies Literal;
+    }
+
+    if (this.match(TokenType.IDENTIFIER)) {
+      return { __type: "Variable", name: this.previous() } satisfies Variable;
     }
 
     if (this.match(TokenType.LEFT_PAREN)) {

@@ -32,6 +32,11 @@ export type Unary = {
   right: Expr;
 };
 
-export type Expr = Ternary | Binary | Grouping | Literal | Unary;
+export type Variable = {
+  __type: "Variable";
+  name: Token;
+};
+
+export type Expr = Ternary | Binary | Grouping | Literal | Unary | Variable;
 
 export type LiteralValue = boolean | string | number | null;
