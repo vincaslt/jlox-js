@@ -1,5 +1,6 @@
 import { match } from "ts-pattern";
 import type {
+  Assign,
   Binary,
   Expr,
   Grouping,
@@ -19,6 +20,7 @@ const environment = new Environment();
 
 function evaluate(expr: Expr): LiteralValue {
   return match(expr)
+    .with({ __type: "Assign" }, evaluateAssignExpr)
     .with({ __type: "Variable" }, evaluateVariableExpr)
     .with({ __type: "Binary" }, evaluateBinaryExpr)
     .with({ __type: "Ternary" }, evaluateTernaryExpr)
@@ -41,6 +43,10 @@ function evaluatePrintStmt(stmt: Print): void {
   process.stdout.write(stringify(value) + "\n");
 }
 
+function evaluateExprStmt(stmt: Expression): void {
+  evaluate(stmt.expression);
+}
+
 function evaluateVarStmt(stmt: Var): void {
   let value: LiteralValue = null;
   if (stmt.initializer) {
@@ -49,12 +55,14 @@ function evaluateVarStmt(stmt: Var): void {
   environment.define(stmt.name.lexeme, value);
 }
 
-function evaluateVariableExpr(stmt: Variable): LiteralValue {
-  return environment.get(stmt.name);
+function evaluateAssignExpr(expr: Assign): LiteralValue {
+  const value = evaluate(expr.value);
+  environment.assign(expr.name, value);
+  return value;
 }
 
-function evaluateExprStmt(stmt: Expression): void {
-  evaluate(stmt.expression);
+function evaluateVariableExpr(expr: Variable): LiteralValue {
+  return environment.get(expr.name);
 }
 
 function evaluateLiteralExpr(expr: Literal): LiteralValue {

@@ -1,4 +1,5 @@
 import type {
+  Assign,
   Binary,
   Expr,
   Grouping,
@@ -77,7 +78,23 @@ export default class Parser {
   }
 
   private expression(): Expr {
-    return this.commaExpression();
+    return this.assignment();
+  }
+
+  private assignment(): Expr {
+    const expr = this.commaExpression();
+
+    if (this.match(TokenType.EQUAL)) {
+      const equals = this.previous();
+      const value = this.commaExpression();
+      if (expr.__type === "Variable") {
+        const name = expr.name;
+        return { __type: "Assign", name, value } satisfies Assign;
+      }
+      this.error(equals, "Invalid assignment target.");
+    }
+
+    return expr;
   }
 
   private commaExpression(): Expr {

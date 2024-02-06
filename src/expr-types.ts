@@ -1,5 +1,11 @@
 import type Token from "~/token";
 
+export type Assign = {
+  __type: "Assign";
+  name: Token;
+  value: Expr;
+};
+
 export type Ternary = {
   __type: "Ternary";
   left: Expr;
@@ -37,6 +43,13 @@ export type Variable = {
   name: Token;
 };
 
-export type Expr = Ternary | Binary | Grouping | Literal | Unary | Variable;
+export type Expr =
+  | Ternary
+  | Binary
+  | Grouping
+  | Literal
+  | Unary
+  | Variable
+  | Assign;
 
 export type LiteralValue = boolean | string | number | null;
