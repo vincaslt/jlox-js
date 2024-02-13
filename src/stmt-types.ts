@@ -17,4 +17,9 @@ export type Print = {
   expression: Expr;
 };
 
-export type Stmt = Expression | Print | Var;
+export type Block = {
+  __type: "Block";
+  statements: Stmt[];
+};
+
+export type Stmt = Expression | Print | Var | Block;

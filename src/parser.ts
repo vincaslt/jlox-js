@@ -9,7 +9,7 @@ import type {
   Variable,
 } from "./expr-types";
 import * as Lox from "./lox";
-import type { Stmt, Var } from "./stmt-types";
+import type { Block, Stmt, Var } from "./stmt-types";
 import Token from "./token";
 import TokenType from "./token-type";
 
@@ -62,6 +62,9 @@ export default class Parser {
     if (this.match(TokenType.PRINT)) {
       return this.printStatement();
     }
+    if (this.match(TokenType.LEFT_BRACE)) {
+      return { __type: "Block", statements: this.block() } satisfies Block;
+    }
     return this.exprStatement();
   }
 
@@ -75,6 +78,19 @@ export default class Parser {
     const expression = this.expression();
     this.consume(TokenType.SEMICOLON, "Expect ';' after value");
     return { __type: "Print", expression } satisfies Stmt;
+  }
+
+  private block() {
+    const statements: Stmt[] = [];
+
+    while (!this.check(TokenType.RIGHT_BRACE) && !this.isAtEnd()) {
+      const declaration = this.declaration();
+      if (declaration) {
+        statements.push(declaration);
+      }
+    }
+    this.consume(TokenType.RIGHT_BRACE, "Expect '}' after block.");
+    return statements;
   }
 
   private expression(): Expr {

@@ -13,10 +13,10 @@ import type {
 import TokenType from "./token-type";
 import type Token from "./token";
 import * as Lox from "~/lox";
-import type { Expression, Print, Stmt, Var } from "./stmt-types";
+import type { Block, Expression, Print, Stmt, Var } from "./stmt-types";
 import Environment from "./environment";
 
-const environment = new Environment();
+let environment = new Environment();
 
 function evaluate(expr: Expr): LiteralValue {
   return match(expr)
@@ -35,6 +35,7 @@ function execute(stmt: Stmt): void {
     .with({ __type: "Var" }, evaluateVarStmt)
     .with({ __type: "Print" }, evaluatePrintStmt)
     .with({ __type: "Expression" }, evaluateExprStmt)
+    .with({ __type: "Block" }, evaluateBlockStmt)
     .exhaustive();
 }
 
@@ -53,6 +54,19 @@ function evaluateVarStmt(stmt: Var): void {
     value = evaluate(stmt.initializer);
   }
   environment.define(stmt.name.lexeme, value);
+}
+
+function evaluateBlockStmt(stmt: Block): void {
+  const previous = environment;
+
+  try {
+    environment = new Environment(previous);
+    for (const statement of stmt.statements) {
+      execute(statement);
+    }
+  } finally {
+    environment = previous;
+  }
 }
 
 function evaluateAssignExpr(expr: Assign): LiteralValue {
