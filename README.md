@@ -12,6 +12,8 @@ I added some extra features not present in the original book implementation and/
 - Binary operator w/missing left operand error productions
 - Division by zero error handling
 - Automatic number conversion to string when adding to strings
+- Printing expression results in REPL
+- Runtime error when accessing undefined variable
 
 To install dependencies:
 

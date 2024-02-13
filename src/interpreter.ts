@@ -16,6 +16,8 @@ import * as Lox from "~/lox";
 import type { Block, Expression, Print, Stmt, Var } from "./stmt-types";
 import Environment from "./environment";
 
+export type InterpreterOptions = { printExpressionStatements: boolean };
+
 let environment = new Environment();
 
 function evaluate(expr: Expr): LiteralValue {
@@ -30,12 +32,12 @@ function evaluate(expr: Expr): LiteralValue {
     .exhaustive();
 }
 
-function execute(stmt: Stmt): void {
+function execute(stmt: Stmt, options: InterpreterOptions): void {
   return match(stmt)
     .with({ __type: "Var" }, evaluateVarStmt)
     .with({ __type: "Print" }, evaluatePrintStmt)
-    .with({ __type: "Expression" }, evaluateExprStmt)
-    .with({ __type: "Block" }, evaluateBlockStmt)
+    .with({ __type: "Expression" }, (stmt) => evaluateExprStmt(stmt, options))
+    .with({ __type: "Block" }, (stmt) => evaluateBlockStmt(stmt, options))
     .exhaustive();
 }
 
@@ -44,25 +46,28 @@ function evaluatePrintStmt(stmt: Print): void {
   process.stdout.write(stringify(value) + "\n");
 }
 
-function evaluateExprStmt(stmt: Expression): void {
-  evaluate(stmt.expression);
+function evaluateExprStmt(stmt: Expression, options: InterpreterOptions): void {
+  const result = evaluate(stmt.expression);
+  if (options.printExpressionStatements) {
+    process.stdout.write(stringify(result) + "\n");
+  }
 }
 
 function evaluateVarStmt(stmt: Var): void {
-  let value: LiteralValue = null;
+  let value: LiteralValue | undefined;
   if (stmt.initializer) {
     value = evaluate(stmt.initializer);
   }
   environment.define(stmt.name.lexeme, value);
 }
 
-function evaluateBlockStmt(stmt: Block): void {
+function evaluateBlockStmt(stmt: Block, options: InterpreterOptions): void {
   const previous = environment;
 
   try {
     environment = new Environment(previous);
     for (const statement of stmt.statements) {
-      execute(statement);
+      execute(statement, options);
     }
   } finally {
     environment = previous;
@@ -216,10 +221,10 @@ function stringify(value: LiteralValue) {
   return value.toString();
 }
 
-export function interpret(statements: Stmt[]) {
+export function interpret(statements: Stmt[], options: InterpreterOptions) {
   try {
     for (const statement of statements) {
-      execute(statement);
+      execute(statement, options);
     }
   } catch (e) {
     if (e instanceof RuntimeError) {

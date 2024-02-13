@@ -1,4 +1,8 @@
-import { interpret, type RuntimeError } from "./interpreter";
+import {
+  interpret,
+  type InterpreterOptions,
+  type RuntimeError,
+} from "./interpreter";
 import Parser from "./parser";
 import Scanner from "./scanner";
 import type Token from "./token";
@@ -27,7 +31,7 @@ async function runPrompt() {
     if (!line) {
       break;
     }
-    run(line);
+    run(line, { printExpressionStatements: true });
     hadError = false;
     process.stdout.write(prompt);
   }
@@ -36,7 +40,7 @@ async function runPrompt() {
 async function runFile(path: string) {
   const file = Bun.file(path);
   const content = await file.text();
-  run(content);
+  run(content, { printExpressionStatements: false });
   if (hadError) {
     process.exit(65);
   }
@@ -45,7 +49,7 @@ async function runFile(path: string) {
   }
 }
 
-function run(source: string) {
+function run(source: string, options: InterpreterOptions) {
   const scanner = new Scanner(source);
   const tokens = scanner.scanTokens();
 
@@ -56,7 +60,7 @@ function run(source: string) {
     return;
   }
 
-  interpret(statements);
+  interpret(statements, options);
 }
 
 export function error(token: Token, message: string) {

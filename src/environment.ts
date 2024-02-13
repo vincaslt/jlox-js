@@ -4,19 +4,28 @@ import type Token from "./token";
 
 export default class Environment {
   enclosing: Environment | null;
-  values = new Map<string, LiteralValue>();
+  values = new Map<string, LiteralValue | undefined>();
 
   constructor(enclosing: Environment | null = null) {
     this.enclosing = enclosing;
   }
 
-  define(name: string, value: LiteralValue) {
+  define(name: string, value: LiteralValue | undefined) {
     this.values.set(name, value);
   }
 
   get(name: Token): LiteralValue {
     if (this.values.has(name.lexeme)) {
-      return this.values.get(name.lexeme)!;
+      const value = this.values.get(name.lexeme);
+
+      if (value === undefined) {
+        throw new RuntimeError(
+          name,
+          `Accessed variable ${name.lexeme} before initialization.`
+        );
+      }
+
+      return value;
     }
 
     if (this.enclosing !== null) {
