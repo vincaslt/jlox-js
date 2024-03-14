@@ -6,6 +6,13 @@ export type Expression = {
   expression: Expr;
 };
 
+export type If = {
+  __type: "If";
+  condition: Expr;
+  thenBranch: Stmt;
+  elseBranch?: Stmt;
+};
+
 export type Var = {
   __type: "Var";
   name: Token;
@@ -22,4 +29,4 @@ export type Block = {
   statements: Stmt[];
 };
 
-export type Stmt = Expression | Print | Var | Block;
+export type Stmt = Expression | Print | Var | Block | If;

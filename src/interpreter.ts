@@ -13,7 +13,7 @@ import type {
 import TokenType from "./token-type";
 import type Token from "./token";
 import * as Lox from "~/lox";
-import type { Block, Expression, Print, Stmt, Var } from "./stmt-types";
+import type { Block, Expression, If, Print, Stmt, Var } from "./stmt-types";
 import Environment from "./environment";
 
 export type InterpreterOptions = { printExpressionStatements: boolean };
@@ -37,6 +37,7 @@ function execute(stmt: Stmt, options: InterpreterOptions): void {
     .with({ __type: "Var" }, evaluateVarStmt)
     .with({ __type: "Print" }, evaluatePrintStmt)
     .with({ __type: "Expression" }, (stmt) => evaluateExprStmt(stmt, options))
+    .with({ __type: "If" }, (stmt) => evaluateIfStmt(stmt, options))
     .with({ __type: "Block" }, (stmt) => evaluateBlockStmt(stmt, options))
     .exhaustive();
 }
@@ -50,6 +51,14 @@ function evaluateExprStmt(stmt: Expression, options: InterpreterOptions): void {
   const result = evaluate(stmt.expression);
   if (options.printExpressionStatements) {
     process.stdout.write(stringify(result) + "\n");
+  }
+}
+
+function evaluateIfStmt(stmt: If, options: InterpreterOptions): void {
+  if (isTruthy(evaluate(stmt.condition))) {
+    execute(stmt.thenBranch, options);
+  } else if (stmt.elseBranch) {
+    execute(stmt.elseBranch, options);
   }
 }
 

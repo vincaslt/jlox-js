@@ -9,7 +9,7 @@ import type {
   Variable,
 } from "./expr-types";
 import * as Lox from "./lox";
-import type { Block, Stmt, Var } from "./stmt-types";
+import type { Block, Expression, If, Print, Stmt, Var } from "./stmt-types";
 import Token from "./token";
 import TokenType from "./token-type";
 
@@ -46,7 +46,7 @@ export default class Parser {
     }
   }
 
-  private varDeclaration(): Stmt {
+  private varDeclaration(): Var {
     const name = this.consume(TokenType.IDENTIFIER, "Expect variable name");
 
     let initializer: Expr | undefined;
@@ -55,10 +55,13 @@ export default class Parser {
     }
 
     this.consume(TokenType.SEMICOLON, "Expect ';' after variable declaration");
-    return { __type: "Var", name, initializer } satisfies Var;
+    return { __type: "Var", name, initializer };
   }
 
   private statement(): Stmt {
+    if (this.match(TokenType.IF)) {
+      return this.ifStatement();
+    }
     if (this.match(TokenType.PRINT)) {
       return this.printStatement();
     }
@@ -68,16 +71,36 @@ export default class Parser {
     return this.exprStatement();
   }
 
-  private exprStatement(): Stmt {
-    const expression = this.expression();
-    this.consume(TokenType.SEMICOLON, "Expect ';' after value");
-    return { __type: "Expression", expression } satisfies Stmt;
+  ifStatement(): If {
+    this.consume(TokenType.LEFT_PAREN, "Expect '(' after if.");
+    const condition = this.expression();
+    this.consume(TokenType.RIGHT_PAREN, "Expect ')' after if condition.");
+
+    const thenBranch = this.statement();
+
+    let elseBranch: Stmt | undefined;
+    if (this.match(TokenType.ELSE)) {
+      elseBranch = this.statement();
+    }
+
+    return {
+      __type: "If",
+      condition,
+      thenBranch,
+      elseBranch,
+    };
   }
 
-  private printStatement(): Stmt {
+  private exprStatement(): Expression {
     const expression = this.expression();
     this.consume(TokenType.SEMICOLON, "Expect ';' after value");
-    return { __type: "Print", expression } satisfies Stmt;
+    return { __type: "Expression", expression };
+  }
+
+  private printStatement(): Print {
+    const expression = this.expression();
+    this.consume(TokenType.SEMICOLON, "Expect ';' after value");
+    return { __type: "Print", expression };
   }
 
   private block() {
