@@ -24,9 +24,15 @@ export type Print = {
   expression: Expr;
 };
 
+export type While = {
+  __type: "While";
+  condition: Expr;
+  body: Stmt;
+};
+
 export type Block = {
   __type: "Block";
   statements: Stmt[];
 };
 
-export type Stmt = Expression | Print | Var | Block | If;
+export type Stmt = Expression | Print | Var | Block | If | While;

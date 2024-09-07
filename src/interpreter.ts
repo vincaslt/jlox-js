@@ -14,7 +14,15 @@ import type {
 import TokenType from "./token-type";
 import type Token from "./token";
 import * as Lox from "~/lox";
-import type { Block, Expression, If, Print, Stmt, Var } from "./stmt-types";
+import type {
+  Block,
+  Expression,
+  If,
+  Print,
+  Stmt,
+  Var,
+  While,
+} from "./stmt-types";
 import Environment from "./environment";
 
 export type InterpreterOptions = { printExpressionStatements: boolean };
@@ -36,27 +44,28 @@ function evaluate(expr: Expr): LiteralValue {
 
 function execute(stmt: Stmt, options: InterpreterOptions): void {
   return match(stmt)
-    .with({ __type: "Var" }, evaluateVarStmt)
-    .with({ __type: "Print" }, evaluatePrintStmt)
-    .with({ __type: "Expression" }, (stmt) => evaluateExprStmt(stmt, options))
-    .with({ __type: "If" }, (stmt) => evaluateIfStmt(stmt, options))
-    .with({ __type: "Block" }, (stmt) => evaluateBlockStmt(stmt, options))
+    .with({ __type: "Var" }, executeVarStmt)
+    .with({ __type: "Print" }, executePrintStmt)
+    .with({ __type: "While" }, (stmt) => executeWhileStmt(stmt, options))
+    .with({ __type: "Expression" }, (stmt) => executeExprStmt(stmt, options))
+    .with({ __type: "If" }, (stmt) => executeIfStmt(stmt, options))
+    .with({ __type: "Block" }, (stmt) => executeBlockStmt(stmt, options))
     .exhaustive();
 }
 
-function evaluatePrintStmt(stmt: Print): void {
+function executePrintStmt(stmt: Print): void {
   const value = evaluate(stmt.expression);
   process.stdout.write(stringify(value) + "\n");
 }
 
-function evaluateExprStmt(stmt: Expression, options: InterpreterOptions): void {
+function executeExprStmt(stmt: Expression, options: InterpreterOptions): void {
   const result = evaluate(stmt.expression);
   if (options.printExpressionStatements) {
     process.stdout.write(stringify(result) + "\n");
   }
 }
 
-function evaluateIfStmt(stmt: If, options: InterpreterOptions): void {
+function executeIfStmt(stmt: If, options: InterpreterOptions): void {
   if (isTruthy(evaluate(stmt.condition))) {
     execute(stmt.thenBranch, options);
   } else if (stmt.elseBranch) {
@@ -64,7 +73,7 @@ function evaluateIfStmt(stmt: If, options: InterpreterOptions): void {
   }
 }
 
-function evaluateVarStmt(stmt: Var): void {
+function executeVarStmt(stmt: Var): void {
   let value: LiteralValue | undefined;
   if (stmt.initializer) {
     value = evaluate(stmt.initializer);
@@ -72,7 +81,13 @@ function evaluateVarStmt(stmt: Var): void {
   environment.define(stmt.name.lexeme, value);
 }
 
-function evaluateBlockStmt(stmt: Block, options: InterpreterOptions): void {
+function executeWhileStmt(stmt: While, options: InterpreterOptions): void {
+  while (isTruthy(evaluate(stmt.condition))) {
+    execute(stmt.body, options);
+  }
+}
+
+function executeBlockStmt(stmt: Block, options: InterpreterOptions): void {
   const previous = environment;
 
   try {

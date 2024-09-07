@@ -11,7 +11,15 @@ import type {
   Variable,
 } from "./expr-types";
 import * as Lox from "./lox";
-import type { Block, Expression, If, Print, Stmt, Var } from "./stmt-types";
+import type {
+  Block,
+  Expression,
+  If,
+  Print,
+  Stmt,
+  Var,
+  While,
+} from "./stmt-types";
 import Token from "./token";
 import TokenType from "./token-type";
 
@@ -67,14 +75,29 @@ export default class Parser {
     if (this.match(TokenType.PRINT)) {
       return this.printStatement();
     }
+    if (this.match(TokenType.WHILE)) {
+      return this.whileStatement();
+    }
     if (this.match(TokenType.LEFT_BRACE)) {
       return { __type: "Block", statements: this.block() } satisfies Block;
     }
     return this.exprStatement();
   }
 
+  whileStatement(): While {
+    this.consume(TokenType.LEFT_PAREN, "Expect '(' after 'while'.");
+    const condition = this.expression();
+    this.consume(TokenType.RIGHT_PAREN, "Expect ')' after while condition.");
+    const body = this.statement();
+    return {
+      __type: "While",
+      condition,
+      body,
+    };
+  }
+
   ifStatement(): If {
-    this.consume(TokenType.LEFT_PAREN, "Expect '(' after if.");
+    this.consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'.");
     const condition = this.expression();
     this.consume(TokenType.RIGHT_PAREN, "Expect ')' after if condition.");
 
