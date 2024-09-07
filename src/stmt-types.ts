@@ -30,9 +30,25 @@ export type While = {
   body: Stmt;
 };
 
+export type Break = {
+  __type: "Break";
+};
+
+export type Continue = {
+  __type: "Continue";
+};
+
 export type Block = {
   __type: "Block";
   statements: Stmt[];
 };
 
-export type Stmt = Expression | Print | Var | Block | If | While;
+export type Stmt =
+  | Expression
+  | Print
+  | Var
+  | Block
+  | If
+  | While
+  | Break
+  | Continue;

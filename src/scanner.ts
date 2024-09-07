@@ -22,6 +22,8 @@ export default class Scanner {
     true: TokenType.TRUE,
     var: TokenType.VAR,
     while: TokenType.WHILE,
+    break: TokenType.BREAK,
+    continue: TokenType.CONTINUE,
   } as const;
 
   /** The start of the current token */

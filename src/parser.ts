@@ -13,6 +13,8 @@ import type {
 import * as Lox from "./lox";
 import type {
   Block,
+  Break,
+  Continue,
   Expression,
   If,
   Print,
@@ -81,13 +83,29 @@ export default class Parser {
     if (this.match(TokenType.FOR)) {
       return this.forStatement();
     }
+    if (this.match(TokenType.BREAK)) {
+      return this.breakStatement();
+    }
+    if (this.match(TokenType.CONTINUE)) {
+      return this.continueStatement();
+    }
     if (this.match(TokenType.LEFT_BRACE)) {
       return { __type: "Block", statements: this.block() } satisfies Block;
     }
     return this.exprStatement();
   }
 
-  forStatement(): While {
+  breakStatement(): Break {
+    this.consume(TokenType.SEMICOLON, "Expect ';' after value");
+    return { __type: "Break" } satisfies Break;
+  }
+
+  continueStatement(): Continue {
+    this.consume(TokenType.SEMICOLON, "Expect ';' after value");
+    return { __type: "Continue" } satisfies Continue;
+  }
+
+  forStatement(): While | Block {
     this.consume(TokenType.LEFT_PAREN, "Expect '(' after 'for'.");
 
     let initializer: Stmt | null;
@@ -124,6 +142,13 @@ export default class Parser {
 
     condition ??= { __type: "Literal", value: true } satisfies Literal;
     body = { __type: "While", body, condition } satisfies While;
+
+    if (initializer !== null) {
+      body = {
+        __type: "Block",
+        statements: [initializer, body],
+      } satisfies Block;
+    }
 
     return body;
   }

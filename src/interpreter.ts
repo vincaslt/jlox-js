@@ -16,6 +16,8 @@ import type Token from "./token";
 import * as Lox from "~/lox";
 import type {
   Block,
+  Break,
+  Continue,
   Expression,
   If,
   Print,
@@ -28,6 +30,7 @@ import Environment from "./environment";
 export type InterpreterOptions = { printExpressionStatements: boolean };
 
 let environment = new Environment();
+let loopCounter = 0;
 
 function evaluate(expr: Expr): LiteralValue {
   return match(expr)
@@ -50,6 +53,8 @@ function execute(stmt: Stmt, options: InterpreterOptions): void {
     .with({ __type: "Expression" }, (stmt) => executeExprStmt(stmt, options))
     .with({ __type: "If" }, (stmt) => executeIfStmt(stmt, options))
     .with({ __type: "Block" }, (stmt) => executeBlockStmt(stmt, options))
+    .with({ __type: "Break" }, executeBreakStatement)
+    .with({ __type: "Continue" }, executeContinueStatement)
     .exhaustive();
 }
 
@@ -82,8 +87,40 @@ function executeVarStmt(stmt: Var): void {
 }
 
 function executeWhileStmt(stmt: While, options: InterpreterOptions): void {
+  loopCounter += 1;
+
   while (isTruthy(evaluate(stmt.condition))) {
-    execute(stmt.body, options);
+    try {
+      execute(stmt.body, options);
+    } catch (e) {
+      if (!(e instanceof BreakLoop)) {
+        throw e;
+      }
+
+      if (e.type === TokenType.BREAK) {
+        break;
+      }
+
+      if (stmt.body.__type === "Block" && stmt.body.statements.length > 1) {
+        execute(stmt.body.statements.at(-1)!, options);
+      }
+
+      continue;
+    }
+  }
+
+  loopCounter -= 1;
+}
+
+function executeBreakStatement(): void {
+  if (loopCounter > 0) {
+    throw new BreakLoop(TokenType.BREAK);
+  }
+}
+
+function executeContinueStatement(): void {
+  if (loopCounter > 0) {
+    throw new BreakLoop(TokenType.CONTINUE);
   }
 }
 
@@ -248,6 +285,15 @@ export class RuntimeError extends Error {
   constructor(token: Token, message: string) {
     super(message);
     this.token = token;
+  }
+}
+
+export class BreakLoop extends Error {
+  readonly type: TokenType;
+
+  constructor(type: TokenType) {
+    super();
+    this.type = type;
   }
 }
 
