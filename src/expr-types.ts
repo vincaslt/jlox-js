@@ -32,6 +32,13 @@ export type Literal = {
   value: LiteralValue;
 };
 
+export type Logical = {
+  __type: "Logical";
+  left: Expr;
+  operator: Token;
+  right: Expr;
+};
+
 export type Unary = {
   __type: "Unary";
   operator: Token;
@@ -48,6 +55,7 @@ export type Expr =
   | Binary
   | Grouping
   | Literal
+  | Logical
   | Unary
   | Variable
   | Assign;

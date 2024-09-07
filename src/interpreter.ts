@@ -6,6 +6,7 @@ import type {
   Grouping,
   Literal,
   LiteralValue,
+  Logical,
   Ternary,
   Unary,
   Variable,
@@ -28,6 +29,7 @@ function evaluate(expr: Expr): LiteralValue {
     .with({ __type: "Ternary" }, evaluateTernaryExpr)
     .with({ __type: "Grouping" }, evaluateGroupingExpr)
     .with({ __type: "Literal" }, evaluateLiteralExpr)
+    .with({ __type: "Logical" }, evaluateLogicalExpr)
     .with({ __type: "Unary" }, evaluateUnaryExpr)
     .exhaustive();
 }
@@ -95,6 +97,18 @@ function evaluateVariableExpr(expr: Variable): LiteralValue {
 
 function evaluateLiteralExpr(expr: Literal): LiteralValue {
   return expr.value;
+}
+
+function evaluateLogicalExpr(expr: Logical): LiteralValue {
+  const left = evaluate(expr.left);
+
+  if (expr.operator.type === TokenType.OR) {
+    if (isTruthy(left)) return left;
+  } else {
+    if (!isTruthy(left)) return left;
+  }
+
+  return evaluate(expr.right);
 }
 
 function evaluateGroupingExpr(expr: Grouping): LiteralValue {

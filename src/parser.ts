@@ -1,9 +1,11 @@
+import { P } from "ts-pattern";
 import type {
   Assign,
   Binary,
   Expr,
   Grouping,
   Literal,
+  Logical,
   Ternary,
   Unary,
   Variable,
@@ -158,15 +160,15 @@ export default class Parser {
   }
 
   private ternary(): Expr {
-    let left = this.equality();
+    const left = this.or();
 
     if (this.match(TokenType.QUESTION_MARK)) {
       const operatorLeft = this.previous();
-      let middle = this.ternary();
+      const middle = this.ternary();
 
       if (this.match(TokenType.COLON)) {
         const operatorRight = this.previous();
-        let right = this.ternary();
+        const right = this.ternary();
         return {
           __type: "Ternary",
           left,
@@ -178,6 +180,40 @@ export default class Parser {
       } else {
         throw this.error(this.peek(), "Expect right expression in ternary.");
       }
+    }
+
+    return left;
+  }
+
+  private or(): Expr {
+    const left = this.and();
+
+    while (this.match(TokenType.OR)) {
+      const operator = this.previous();
+      const right = this.and();
+      return {
+        __type: "Logical",
+        left,
+        operator,
+        right,
+      } satisfies Logical;
+    }
+
+    return left;
+  }
+
+  private and(): Expr {
+    const left = this.equality();
+
+    while (this.match(TokenType.AND)) {
+      const operator = this.previous();
+      const right = this.equality();
+      return {
+        __type: "Logical",
+        left,
+        operator,
+        right,
+      } satisfies Logical;
     }
 
     return left;
