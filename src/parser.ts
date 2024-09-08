@@ -2,6 +2,7 @@ import { P } from "ts-pattern";
 import type {
   Assign,
   Binary,
+  Call,
   Expr,
   Grouping,
   Literal,
@@ -224,7 +225,7 @@ export default class Parser {
         const name = expr.name;
         return { __type: "Assign", name, value } satisfies Assign;
       }
-      this.error(equals, "Invalid assignment target.");
+      throw this.error(equals, "Invalid assignment target.");
     }
 
     return expr;
@@ -416,7 +417,37 @@ export default class Parser {
       return { __type: "Unary", operator, right } satisfies Unary;
     }
 
-    return this.primary();
+    return this.call();
+  }
+
+  private call(): Expr {
+    const expr = this.primary();
+
+    while (this.match(TokenType.LEFT_PAREN)) {
+      return this.finishCall(expr);
+    }
+
+    return expr;
+  }
+
+  private finishCall(callee: Expr): Expr {
+    const args: Expr[] = [];
+
+    if (!this.check(TokenType.RIGHT_PAREN)) {
+      do {
+        if (args.length >= 255) {
+          throw this.error(this.peek(), "Can't have more than 255 arguments");
+        }
+        args.push(this.expression());
+      } while (this.match(TokenType.COMMA));
+    }
+
+    const paren = this.consume(
+      TokenType.RIGHT_PAREN,
+      "Expect ')' after arguments."
+    );
+
+    return { __type: "Call", args, callee, paren } satisfies Call;
   }
 
   private primary(): Expr {

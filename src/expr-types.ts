@@ -22,6 +22,13 @@ export type Binary = {
   right: Expr;
 };
 
+export type Call = {
+  __type: "Call";
+  callee: Expr;
+  paren: Token;
+  args: Expr[];
+};
+
 export type Grouping = {
   __type: "Grouping";
   expression: Expr;
@@ -58,6 +65,7 @@ export type Expr =
   | Logical
   | Unary
   | Variable
-  | Assign;
+  | Assign
+  | Call;
 
 export type LiteralValue = boolean | string | number | null;

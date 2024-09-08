@@ -2,6 +2,7 @@ import { match } from "ts-pattern";
 import type {
   Assign,
   Binary,
+  Call,
   Expr,
   Grouping,
   Literal,
@@ -26,6 +27,7 @@ import type {
   While,
 } from "./stmt-types";
 import Environment from "./environment";
+import { isCallable, type Callable } from "./lox-callable";
 
 export type InterpreterOptions = { printExpressionStatements: boolean };
 
@@ -42,6 +44,7 @@ function evaluate(expr: Expr): LiteralValue {
     .with({ __type: "Literal" }, evaluateLiteralExpr)
     .with({ __type: "Logical" }, evaluateLogicalExpr)
     .with({ __type: "Unary" }, evaluateUnaryExpr)
+    .with({ __type: "Call" }, evaluateCallExpr)
     .exhaustive();
 }
 
@@ -236,6 +239,22 @@ function evaluateBinaryExpr(expr: Binary): LiteralValue {
 
   // TODO: unreachable, handle error
   return null;
+}
+
+function evaluateCallExpr(expr: Call): LiteralValue {
+  const callee = evaluate(expr.callee);
+
+  const args: LiteralValue[] = [];
+  for (const arg of expr.args) {
+    args.push(evaluate(arg));
+  }
+
+  if (!isCallable(callee)) {
+    throw new RuntimeError(expr.paren, "Can only call functions and classes.");
+  }
+
+  const fn = callee as unknown as Callable;
+  return fn.call(args);
 }
 
 function evaluateTernaryExpr(expr: Ternary): LiteralValue {
