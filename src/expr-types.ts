@@ -1,4 +1,5 @@
 import type Token from "~/token";
+import type { Callable } from "./lox-callable";
 
 export type Assign = {
   __type: "Assign";
@@ -68,4 +69,4 @@ export type Expr =
   | Assign
   | Call;
 
-export type LiteralValue = boolean | string | number | null;
+export type LiteralValue = Callable | boolean | string | number | null;

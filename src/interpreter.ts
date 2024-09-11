@@ -31,8 +31,14 @@ import { isCallable, type Callable } from "./lox-callable";
 
 export type InterpreterOptions = { printExpressionStatements: boolean };
 
-let environment = new Environment();
 let loopCounter = 0;
+let globals = new Environment();
+let environment = globals;
+
+globals.define("clock", {
+  arity: () => 0,
+  call: () => Date.now() / 1000,
+} satisfies Callable);
 
 function evaluate(expr: Expr): LiteralValue {
   return match(expr)
@@ -252,8 +258,15 @@ function evaluateCallExpr(expr: Call): LiteralValue {
   if (!isCallable(callee)) {
     throw new RuntimeError(expr.paren, "Can only call functions and classes.");
   }
-
   const fn = callee as unknown as Callable;
+
+  if (args.length != fn.arity()) {
+    throw new RuntimeError(
+      expr.paren,
+      `Expected ${fn.arity} arguments but got ${arguments.length}.`
+    );
+  }
+
   return fn.call(args);
 }
 
