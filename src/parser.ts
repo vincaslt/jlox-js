@@ -17,6 +17,7 @@ import type {
   Break,
   Continue,
   Expression,
+  Function,
   If,
   Print,
   Stmt,
@@ -25,6 +26,11 @@ import type {
 } from "./stmt-types";
 import Token from "./token";
 import TokenType from "./token-type";
+
+enum FunctionKind {
+  FUNCTION = "function",
+  METHOD = "method",
+}
 
 export default class Parser {
   private readonly tokens: Token[];
@@ -52,11 +58,43 @@ export default class Parser {
       if (this.match(TokenType.VAR)) {
         return this.varDeclaration();
       }
+      if (this.match(TokenType.FUN)) {
+        return this.functionDeclaration(FunctionKind.FUNCTION);
+      }
       return this.statement();
     } catch (e) {
       this.synchronize();
       return null;
     }
+  }
+
+  private functionDeclaration(kind: FunctionKind): Function {
+    const name = this.consume(TokenType.IDENTIFIER, `Expect ${kind} name.`);
+    this.consume(TokenType.LEFT_PAREN, `Expect '(' after ${kind} name.`);
+
+    const params: Token[] = [];
+
+    if (!this.check(TokenType.RIGHT_PAREN)) {
+      do {
+        if (params.length >= 255) {
+          this.error(this.peek(), "Can't have more than 255 parameters.");
+        }
+
+        params.push(
+          this.consume(TokenType.IDENTIFIER, "Expect parameter name.")
+        );
+      } while (this.match(TokenType.COMMA));
+    }
+
+    this.consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.");
+    this.consume(TokenType.LEFT_BRACE, `Expect '{' before ${kind} body.`);
+    const body = this.block();
+    return {
+      __type: "Function",
+      body,
+      name,
+      params,
+    };
   }
 
   private varDeclaration(): Var {

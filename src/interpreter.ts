@@ -17,8 +17,6 @@ import type Token from "./token";
 import * as Lox from "~/lox";
 import type {
   Block,
-  Break,
-  Continue,
   Expression,
   If,
   Print,

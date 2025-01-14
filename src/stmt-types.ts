@@ -6,6 +6,13 @@ export type Expression = {
   expression: Expr;
 };
 
+export type Function = {
+  __type: "Function";
+  name: Token;
+  params: Token[];
+  body: Stmt[];
+};
+
 export type If = {
   __type: "If";
   condition: Expr;
@@ -51,4 +58,5 @@ export type Stmt =
   | If
   | While
   | Break
-  | Continue;
+  | Continue
+  | Function;
